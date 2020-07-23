@@ -1,0 +1,45 @@
+import { CometdSeries, EventType, ISubscriptionList } from './interfaces'
+
+export function subMapToSetOfLists<T>(sub: CometdSeries<T>): ISubscriptionList {
+  // sub : (type :-> symbol :-> subItem), returns (type :-> [symbol])
+  return Object.entries(sub).reduce((acc, value) => {
+    acc[value[0] as EventType] = Object.keys(value[1])
+    return acc
+  }, {} as ISubscriptionList)
+}
+
+export const toBooleanCometdSub = <T>(sub: CometdSeries<T>) =>
+  Object.keys(sub).reduce((acc, key) => {
+    const eventType = key as EventType
+    acc[eventType] = Object.keys(sub[eventType]).reduce((innerAcc, innerKey) => {
+      innerAcc[innerKey] = Boolean(sub[eventType][innerKey])
+      return innerAcc
+    }, {} as Record<string, boolean>)
+    return acc
+  }, {} as CometdSeries<boolean>)
+
+function timeSeriesSubSetToList(obj: Record<string, { fromTime: number }>) {
+  return Object.keys(obj).map((key) => ({
+    eventSymbol: key,
+    fromTime: obj[key].fromTime,
+  }))
+}
+
+export function timeSeriesSubMapToSetOfLists(sub: CometdSeries<{ fromTime: number }>) {
+  return Object.entries(sub).reduce((acc, value) => {
+    acc[value[0]] = timeSeriesSubSetToList(value[1])
+    return acc
+  }, {} as Record<string, { fromTime: number; eventSymbol: string }[]>)
+}
+
+export const isEmptySet = (obj: object) => Object.keys(obj).length === 0
+
+export const splitChunks = <Value>(values: Value[], chunkSize: number) => {
+  const results: Value[][] = []
+
+  for (let offset = 0; offset < values.length; offset += chunkSize) {
+    results.push(values.slice(offset, offset + chunkSize))
+  }
+
+  return results
+}

@@ -1,0 +1,7 @@
+src
+docs
+examples
+tsconfig.json
+tslint.json
+.prettierrc
+.idea

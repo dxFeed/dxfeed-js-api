@@ -1,0 +1,64 @@
+{
+  "extends": ["tslint:recommended", "tslint-config-prettier"],
+  "jsRules": {
+    "object-literal-sort-keys": [false]
+  },
+  "rules": {
+    "ordered-imports": [
+      true,
+      {
+        "import-sources-order": "lowercase-first",
+        "module-source-path": "full",
+        "grouped-imports": true,
+        "groups": [
+          {
+            "match": "^react",
+            "order": 1
+          },
+          {
+            "match": "^@/(components|containers)",
+            "order": 31
+          },
+          {
+            "match": "^@/",
+            "order": 20
+          },
+          {
+            "name": "Parent dir",
+            "match": "^[.][.]",
+            "order": 100
+          },
+          {
+            "name": "Current dir",
+            "match": "^[.]",
+            "order": 110
+          },
+          {
+            "match": "^[^\\.]",
+            "order": 10
+          }
+        ]
+      }
+    ],
+    "object-literal-sort-keys": [false],
+    "arrow-return-shorthand": [true, "multiline"],
+    "variable-name": {
+      "options": ["ban-keywords", "check-format", "allow-pascal-case", "allow-leading-underscore"]
+    },
+    "no-duplicate-imports": [true],
+    "no-return-await": true,
+    "jsx-boolean-value": [false],
+    "jsx-no-lambda": [false],
+    "no-default-export": [false],
+    "member-access": [true, "no-public"],
+    "file-name-casing": [
+      true,
+      {
+        "index.tsx": "camel-case",
+        "stories.tsx": "camel-case",
+        ".tsx": "pascal-case",
+        ".ts": "camel-case"
+      }
+    ]
+  }
+}

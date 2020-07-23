@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "allowJs": false,
+    "allowUnusedLabels": true,
+    "baseUrl": ".",
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "lib": ["dom", "es2015", "esnext"],
+    "module": "commonjs",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "outDir": "./lib",
+    "types": ["jest"],
+    "removeComments": true,
+    "inlineSourceMap": true,
+    "strict": true,
+    "strictNullChecks": false,
+    "target": "es2017"
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "*/__mocks__", "*/**/*.test.ts"]
+}
