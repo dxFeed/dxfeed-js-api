@@ -12,7 +12,7 @@
     "noUnusedParameters": true,
     "outDir": "./lib",
     "types": ["jest"],
-    "removeComments": true,
+    "removeComments": false,
     "inlineSourceMap": true,
     "strict": true,
     "strictNullChecks": false,
