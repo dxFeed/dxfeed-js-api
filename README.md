@@ -7,7 +7,7 @@ Our package easy integrates with any modern framework.
 ## Install
 
 ```sh
-yarn add @dxfeed/cometd
+yarn add @dxfeed/api
 ```
 
 ## Basic Usage
@@ -25,7 +25,7 @@ The *Endpoint* is responsible for managing the web socket connection.
 
 ## Import package
 ```ts
-import Feed from '@dxfeed/cometd'
+import Feed from '@dxfeed/api'
 ```
 
 ## Configure & Create connection
