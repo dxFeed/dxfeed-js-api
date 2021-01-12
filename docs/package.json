@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "start": "docz dev",
-    "build": "docz build"
+    "build": "docz build --base=/dxfeed-js-api/"
   },
   "dependencies": {
     "@emotion/core": "^10.0.14",
