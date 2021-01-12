@@ -3,5 +3,6 @@ docs
 examples
 tsconfig.json
 tslint.json
+yarn.lock
 .prettierrc
 .idea
