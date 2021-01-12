@@ -1,6 +1,4 @@
-# @dxfeed/api
-[![Version][https://img.shields.io/npm/v/@dxfeed/api.svg?style=flat-square]][https://www.npmjs.com/package/@dxfeed/api]
-[![MIT License][https://img.shields.io/npm/l/@dxfeed/api.svg?style=flat-square]][license]
+# @dxfeed/api [![Version](https://img.shields.io/npm/v/@dxfeed/api.svg?style=flat-square)](https://www.npmjs.com/package/@dxfeed/api)
 
 This package provides access to [dxFeed](https://www.dxfeed.com/) streaming data.
 
