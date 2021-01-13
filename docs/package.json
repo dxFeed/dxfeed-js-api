@@ -2,10 +2,12 @@
   "name": "@dxfeed/api-docs",
   "version": "1.0.0",
   "license": "MPL-2.0",
+  "repository": "https://github.com/dxFeed/dxfeed-js-api.git",
   "private": true,
   "scripts": {
     "start": "docz dev",
-    "build": "docz build --base=/dxfeed-js-api/"
+    "build": "docz build --base=/dxfeed-js-api/",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@emotion/core": "^10.0.14",
@@ -17,9 +19,10 @@
     "react-inspector": "^5.0.1"
   },
   "devDependencies": {
+    "@types/react": "^16.8.23",
+    "@types/react-dom": "^16.8.4",
     "@types/react-inspector": "^4.0.0",
     "@types/theme-ui": "^0.3.5",
-    "@types/react": "^16.8.23",
-    "@types/react-dom": "^16.8.4"
+    "gh-pages": "^3.1.0"
   }
 }
