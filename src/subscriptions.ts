@@ -235,7 +235,11 @@ export class Subscriptions {
         subscription.listeners.push(handleEvent /* FIXME */ as any)
         subscription.fromTimes.push(fromTime)
 
-        if (fromTime < subscription.fromTime) {
+        /*
+         * Cases when incoming subscription timestamp is the same must trigger subscription too
+         * (e.g. two simultaneous subscriptions coming from different clients)
+         */
+        if (fromTime <= subscription.fromTime) {
           subscription.fromTime = fromTime
 
           // Add in add queue
