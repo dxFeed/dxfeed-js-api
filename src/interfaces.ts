@@ -11,6 +11,12 @@ export enum EventType {
   Trade = 'Trade',
   Summary = 'Summary',
   Profile = 'Profile',
+  Greeks = 'Greeks',
+  TheoPrice = 'TheoPrice',
+  TimeAndSale = 'TimeAndSale',
+  Underlying = 'Underlying',
+  Order = 'Order',
+  Configuration = 'Configuration',
 }
 
 export interface IEvent {
