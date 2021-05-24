@@ -178,7 +178,7 @@ export class Subscriptions {
     }
   }
 
-  async sendSubLater() {
+  sendSubLater() {
     if (this.queue.count > MAX_ACTIONS_SIZE) {
       if (this.sendSubTimeout !== null) {
         clearTimeout(this.sendSubTimeout)
