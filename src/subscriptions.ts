@@ -84,69 +84,6 @@ export class Subscriptions {
     endpoint.registerDataChangeHandler(this.onData)
   }
 
-  private onStateChange = (stateChange: Partial<IFeedImplState>) => {
-    if (stateChange.connected) {
-      this.queue.reset = true
-      this.sendSubLater()
-    }
-
-    Object.entries(stateChange).forEach(([key, val]) => {
-      this.state[key] = val
-    })
-  }
-
-  private addQueue = (eventType: EventType, eventSymbol: string) => {
-    this.queue.add = {
-      ...this.queue.add,
-      [eventType]: {
-        ...this.queue.add[eventType],
-        [eventSymbol]: true,
-      },
-    }
-
-    this.queue.count++
-  }
-
-  private removeQueue = (eventType: EventType, eventSymbol: string) => {
-    this.queue.remove = {
-      ...this.queue.remove,
-      [eventType]: {
-        ...this.queue.remove[eventType],
-        [eventSymbol]: true,
-      },
-    }
-
-    this.queue.count++
-  }
-
-  private addTimeSeriesQueue = (
-    eventType: EventType,
-    eventSymbol: string,
-    options: ITimeSeriesOptions
-  ) => {
-    this.queue.addTimeSeries = {
-      ...this.queue.addTimeSeries,
-      [eventType]: {
-        ...this.queue.addTimeSeries[eventType],
-        [eventSymbol]: options,
-      },
-    }
-
-    this.queue.count++
-  }
-
-  private removeTimeSeriesQueue = (eventType: EventType, eventSymbol: string) => {
-    this.queue.removeTimeSeries = {
-      ...this.queue.removeTimeSeries,
-      [eventType]: {
-        ...this.queue.removeTimeSeries[eventType],
-        [eventSymbol]: true,
-      },
-    }
-
-    this.queue.count++
-  }
-
   sendSub = () => {
     const message: ISubscribeMessage = {}
 
@@ -344,6 +281,69 @@ export class Subscriptions {
 
       this.sendSubLater()
     }
+  }
+
+  private onStateChange = (stateChange: Partial<IFeedImplState>) => {
+    if (stateChange.connected) {
+      this.queue.reset = true
+      this.sendSubLater()
+    }
+
+    Object.entries(stateChange).forEach(([key, val]) => {
+      this.state[key] = val
+    })
+  }
+
+  private addQueue = (eventType: EventType, eventSymbol: string) => {
+    this.queue.add = {
+      ...this.queue.add,
+      [eventType]: {
+        ...this.queue.add[eventType],
+        [eventSymbol]: true,
+      },
+    }
+
+    this.queue.count++
+  }
+
+  private removeQueue = (eventType: EventType, eventSymbol: string) => {
+    this.queue.remove = {
+      ...this.queue.remove,
+      [eventType]: {
+        ...this.queue.remove[eventType],
+        [eventSymbol]: true,
+      },
+    }
+
+    this.queue.count++
+  }
+
+  private addTimeSeriesQueue = (
+    eventType: EventType,
+    eventSymbol: string,
+    options: ITimeSeriesOptions
+  ) => {
+    this.queue.addTimeSeries = {
+      ...this.queue.addTimeSeries,
+      [eventType]: {
+        ...this.queue.addTimeSeries[eventType],
+        [eventSymbol]: options,
+      },
+    }
+
+    this.queue.count++
+  }
+
+  private removeTimeSeriesQueue = (eventType: EventType, eventSymbol: string) => {
+    this.queue.removeTimeSeries = {
+      ...this.queue.removeTimeSeries,
+      [eventType]: {
+        ...this.queue.removeTimeSeries[eventType],
+        [eventSymbol]: true,
+      },
+    }
+
+    this.queue.count++
   }
 
   private onData = ([headData, bodyData]: IncomingData, timeSeries: boolean) => {
