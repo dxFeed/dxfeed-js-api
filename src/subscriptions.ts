@@ -25,18 +25,26 @@ import {
   toBooleanCometdSub,
 } from './utils'
 
+interface ITimeSeriesOptions {
+  fromTime: number
+}
+
 type Queue = {
   reset: boolean
+
+  count: number
 
   add: CometdSeries<boolean>
   remove: CometdSeries<boolean>
 
-  addTimeSeries: CometdSeries<{ fromTime: number }>
+  addTimeSeries: CometdSeries<ITimeSeriesOptions>
   removeTimeSeries: CometdSeries<boolean>
 }
 
 const createDefaultQueue = (): Queue => ({
   reset: false,
+
+  count: 0,
 
   add: {},
   remove: {},
@@ -44,6 +52,8 @@ const createDefaultQueue = (): Queue => ({
   addTimeSeries: {},
   removeTimeSeries: {},
 })
+
+const MAX_ACTIONS_SIZE = 200
 
 export class Subscriptions {
   endpoint: Endpoint
@@ -65,15 +75,7 @@ export class Subscriptions {
   subscriptions: CometdSeries<ITotalSubItem> = {}
   timeSeriesSubscriptions: CometdSeries<ITotalTimeSeriesSubItem> = {}
 
-  queue: {
-    reset: boolean
-
-    add: CometdSeries<boolean>
-    remove: CometdSeries<boolean>
-
-    addTimeSeries: CometdSeries<{ fromTime: number }>
-    removeTimeSeries: CometdSeries<boolean>
-  } = createDefaultQueue()
+  queue: Queue = createDefaultQueue()
 
   constructor(endpoint: Endpoint) {
     this.endpoint = endpoint
@@ -91,6 +93,58 @@ export class Subscriptions {
     Object.entries(stateChange).forEach(([key, val]) => {
       this.state[key] = val
     })
+  }
+
+  private addQueue = (eventType: EventType, eventSymbol: string) => {
+    this.queue.add = {
+      ...this.queue.add,
+      [eventType]: {
+        ...this.queue.add[eventType],
+        [eventSymbol]: true,
+      },
+    }
+
+    this.queue.count++
+  }
+
+  private removeQueue = (eventType: EventType, eventSymbol: string) => {
+    this.queue.remove = {
+      ...this.queue.remove,
+      [eventType]: {
+        ...this.queue.remove[eventType],
+        [eventSymbol]: true,
+      },
+    }
+
+    this.queue.count++
+  }
+
+  private addTimeSeriesQueue = (
+    eventType: EventType,
+    eventSymbol: string,
+    options: ITimeSeriesOptions
+  ) => {
+    this.queue.addTimeSeries = {
+      ...this.queue.addTimeSeries,
+      [eventType]: {
+        ...this.queue.addTimeSeries[eventType],
+        [eventSymbol]: options,
+      },
+    }
+
+    this.queue.count++
+  }
+
+  private removeTimeSeriesQueue = (eventType: EventType, eventSymbol: string) => {
+    this.queue.removeTimeSeries = {
+      ...this.queue.removeTimeSeries,
+      [eventType]: {
+        ...this.queue.removeTimeSeries[eventType],
+        [eventSymbol]: true,
+      },
+    }
+
+    this.queue.count++
   }
 
   sendSub = () => {
@@ -125,10 +179,18 @@ export class Subscriptions {
   }
 
   sendSubLater() {
+    if (this.queue.count > MAX_ACTIONS_SIZE) {
+      if (this.sendSubTimeout !== null) {
+        clearTimeout(this.sendSubTimeout)
+        this.sendSubTimeout = null
+      }
+
+      return this.sendSub()
+    }
+
     if (this.sendSubTimeout === null) {
       this.sendSubTimeout = setTimeout(() => {
         this.sendSubTimeout = null
-
         this.sendSub()
       }, 0)
     }
@@ -159,14 +221,7 @@ export class Subscriptions {
           delete this.queue.remove[eventType][eventSymbol]
         }
 
-        // Add in add queue
-        this.queue.add = {
-          ...this.queue.add,
-          [eventType]: {
-            ...this.queue.add[eventType],
-            [eventSymbol]: true,
-          },
-        }
+        this.addQueue(eventType, eventSymbol)
       })
     })
 
@@ -187,13 +242,7 @@ export class Subscriptions {
               delete this.queue.add[eventType][eventSymbol]
             }
 
-            this.queue.remove = {
-              ...this.queue.remove,
-              [eventType]: {
-                ...this.queue.remove[eventType],
-                [eventSymbol]: true,
-              },
-            }
+            this.removeQueue(eventType, eventSymbol)
           } else {
             subscription.listeners = newListeners
           }
@@ -242,16 +291,9 @@ export class Subscriptions {
         if (fromTime <= subscription.fromTime) {
           subscription.fromTime = fromTime
 
-          // Add in add queue
-          this.queue.addTimeSeries = {
-            ...this.queue.addTimeSeries,
-            [eventType]: {
-              ...this.queue.addTimeSeries[eventType],
-              [eventSymbol]: {
-                fromTime,
-              },
-            },
-          }
+          this.addTimeSeriesQueue(eventType, eventSymbol, {
+            fromTime,
+          })
         }
 
         // Delete from remove queue
@@ -281,13 +323,7 @@ export class Subscriptions {
               delete this.queue.addTimeSeries[eventType][eventSymbol]
             }
 
-            this.queue.removeTimeSeries = {
-              ...this.queue.removeTimeSeries,
-              [eventType]: {
-                ...this.queue.removeTimeSeries[eventType],
-                [eventSymbol]: true,
-              },
-            }
+            this.removeTimeSeriesQueue(eventType, eventSymbol)
           } else {
             subscription.listeners = newListeners
 
@@ -298,16 +334,9 @@ export class Subscriptions {
             if (subscription.fromTime !== newFromTime) {
               subscription.fromTime = newFromTime
 
-              // Add in add queue
-              this.queue.addTimeSeries = {
-                ...this.queue.addTimeSeries,
-                [eventType]: {
-                  ...this.queue.addTimeSeries[eventType],
-                  [eventSymbol]: {
-                    fromTime: newFromTime,
-                  },
-                },
-              }
+              this.addTimeSeriesQueue(eventType, eventSymbol, {
+                fromTime: newFromTime,
+              })
             }
           }
         })
