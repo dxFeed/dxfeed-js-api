@@ -2,7 +2,7 @@
 
 This package provides access to [dxFeed](https://www.dxfeed.com/) streaming data.
 
-Our package easy integrates with any modern framework.
+Our package is easy to integrate with any modern framework.
 
 ## Install
 
