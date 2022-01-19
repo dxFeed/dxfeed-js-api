@@ -1,4 +1,5 @@
 # @dxfeed/api [![Version](https://img.shields.io/npm/v/@dxfeed/api.svg?style=flat-square)](https://www.npmjs.com/package/@dxfeed/api)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FdxFeed%2Fdxfeed-js-api.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FdxFeed%2Fdxfeed-js-api?ref=badge_shield)
 
 This package provides access to [dxFeed](https://www.dxfeed.com/) streaming data.
 
@@ -86,3 +87,7 @@ If you need to close the web socket connection
 ```ts
 feed.disconnect()
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FdxFeed%2Fdxfeed-js-api.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FdxFeed%2Fdxfeed-js-api?ref=badge_large)
