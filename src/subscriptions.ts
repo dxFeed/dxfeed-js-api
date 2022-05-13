@@ -26,7 +26,7 @@ import {
 } from './utils'
 
 interface ITimeSeriesOptions {
-  fromTime: number
+  fromTime: number | undefined
 }
 
 type Queue = {
@@ -37,7 +37,7 @@ type Queue = {
   add: CometdSeries<boolean>
   remove: CometdSeries<boolean>
 
-  addTimeSeries: CometdSeries<ITimeSeriesOptions | boolean>
+  addTimeSeries: CometdSeries<ITimeSeriesOptions>
   removeTimeSeries: CometdSeries<boolean>
 }
 
@@ -193,8 +193,8 @@ export class Subscriptions {
   subscribeTimeSeries<TEvent extends ITimeSeriesEvent = ITimeSeriesEvent>(
     eventTypes: EventType[],
     eventSymbols: string[],
-    onChange: (event: TEvent) => void,
-    fromTime?: number
+    fromTime: number | undefined,
+    onChange: (event: TEvent) => void
   ) {
     const fromTimeRestriction = fromTime === undefined ? Date.now() : fromTime
 
@@ -224,7 +224,7 @@ export class Subscriptions {
         subscription.fromTimes.push(fromTime)
 
         if (fromTime === undefined && subscription.fromTimes.length === 1) {
-          this.addTimeSeriesQueue(eventType, eventSymbol)
+          this.addTimeSeriesQueue(eventType, eventSymbol, { fromTime: undefined })
           /*
            * Cases when incoming subscription timestamp is the same must trigger subscription too
            * (e.g. two simultaneous subscriptions coming from different clients)
@@ -281,7 +281,7 @@ export class Subscriptions {
 
               const options =
                 newFromTime === Number.POSITIVE_INFINITY
-                  ? undefined
+                  ? { fromTime: undefined }
                   : {
                       fromTime: newFromTime,
                     }
@@ -334,13 +334,13 @@ export class Subscriptions {
   private addTimeSeriesQueue = (
     eventType: EventType,
     eventSymbol: string,
-    options?: ITimeSeriesOptions
+    options: ITimeSeriesOptions
   ) => {
     this.queue.addTimeSeries = {
       ...this.queue.addTimeSeries,
       [eventType]: {
         ...this.queue.addTimeSeries[eventType],
-        [eventSymbol]: options || true,
+        [eventSymbol]: options,
       },
     }
 

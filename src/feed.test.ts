@@ -61,7 +61,7 @@ describe('Feed', () => {
       dataResults = data
     })
 
-    instance.subscribeTimeSeries([eventType], [eventSymbol], handleEvent, 0)
+    instance.subscribeTimeSeries([eventType], [eventSymbol], 0, handleEvent)
 
     instance.endpoint.handlers?.onData(
       [
@@ -216,7 +216,7 @@ describe('Feed - subscriptions time series', () => {
   const symbolsSet3 = ['3', '4']
 
   const createSubscriptionTimeSeries = (symbols: string[], fromTime?: number) =>
-    instance.subscribeTimeSeries([eventType], symbols, () => 0, fromTime)
+    instance.subscribeTimeSeries([eventType], symbols, fromTime, () => 0)
 
   beforeEach(() => {
     jest.useFakeTimers()

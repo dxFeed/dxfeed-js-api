@@ -25,14 +25,12 @@ export const toBooleanCometdSub = <T>(sub: CometdSeries<T>) =>
     return acc
   }, {} as CometdSeries<boolean>)
 
-function timeSeriesSubSetToList(obj: Record<string, { fromTime: number } | boolean>) {
+function timeSeriesSubSetToList(obj: Record<string, { fromTime?: number }>) {
   return Object.keys(obj).map((key) => {
-    const options = obj[key]
-
-    if (options !== true && options !== false) {
+    if (obj[key].fromTime !== undefined) {
       return {
         eventSymbol: key,
-        fromTime: options.fromTime,
+        fromTime: obj[key].fromTime,
       }
     }
 
@@ -42,7 +40,7 @@ function timeSeriesSubSetToList(obj: Record<string, { fromTime: number } | boole
   })
 }
 
-export function timeSeriesSubMapToSetOfLists(sub: CometdSeries<{ fromTime: number } | boolean>) {
+export function timeSeriesSubMapToSetOfLists(sub: CometdSeries<{ fromTime?: number }>) {
   return Object.entries(sub).reduce((acc, value) => {
     acc[value[0]] = timeSeriesSubSetToList(value[1])
     return acc
