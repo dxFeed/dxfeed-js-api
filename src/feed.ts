@@ -39,9 +39,9 @@ class Feed {
   subscribeTimeSeries = <TEvent extends ITimeSeriesEvent>(
     eventTypes: EventType[],
     eventSymbols: string[],
-    fromTime: number,
-    onChange: (event: TEvent) => void
-  ) => this.subscriptions.subscribeTimeSeries(eventTypes, eventSymbols, fromTime, onChange)
+    onChange: (event: TEvent) => void,
+    fromTime?: number
+  ) => this.subscriptions.subscribeTimeSeries(eventTypes, eventSymbols, onChange, fromTime)
 }
 
 export default Feed

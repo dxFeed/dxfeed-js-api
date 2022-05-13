@@ -56,7 +56,7 @@ export interface ITotalSubItem {
 export interface ITotalTimeSeriesSubItem {
   listeners: ((event: IEvent) => void)[]
   fromTime: number
-  fromTimes: number[]
+  fromTimes: (number | undefined)[]
 }
 
 export interface IFeedImplState {

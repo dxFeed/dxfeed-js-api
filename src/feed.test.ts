@@ -61,7 +61,7 @@ describe('Feed', () => {
       dataResults = data
     })
 
-    instance.subscribeTimeSeries([eventType], [eventSymbol], 0, handleEvent)
+    instance.subscribeTimeSeries([eventType], [eventSymbol], handleEvent, 0)
 
     instance.endpoint.handlers?.onData(
       [
@@ -211,11 +211,12 @@ describe('Feed - subscriptions time series', () => {
   let instance: Feed
 
   const eventType = EventType.Candle
-  const symbolsSet1 = ['1', '2', '3', '4']
-  const symbolsSet2 = ['2', '3']
+  const symbolsSet1 = ['1', '2']
+  const symbolsSet2 = ['2', '3', '4', '5']
+  const symbolsSet3 = ['3', '4']
 
-  const createSubscriptionTimeSeries = (symbols: string[], fromTime: number) =>
-    instance.subscribeTimeSeries([eventType], symbols, fromTime, () => 0)
+  const createSubscriptionTimeSeries = (symbols: string[], fromTime?: number) =>
+    instance.subscribeTimeSeries([eventType], symbols, () => 0, fromTime)
 
   beforeEach(() => {
     jest.useFakeTimers()
@@ -226,24 +227,33 @@ describe('Feed - subscriptions time series', () => {
     const publishFirstTime = jest.fn()
     instance.endpoint.updateSubscriptions = publishFirstTime
 
-    const fromTime1 = 1000
-    const fromTime2 = 10
+    const fromTime2 = 1000
+    const fromTime3 = 10
 
-    const unsubscribe1 = createSubscriptionTimeSeries(symbolsSet1, fromTime1)
+    const unsubscribe1 = createSubscriptionTimeSeries(symbolsSet1)
 
     const unsubscribe2 = createSubscriptionTimeSeries(symbolsSet2, fromTime2)
+
+    const unsubscribe3 = createSubscriptionTimeSeries(symbolsSet3, fromTime3)
 
     jest.runAllTimers()
 
     const publishSecondTime = jest.fn()
     instance.endpoint.updateSubscriptions = publishSecondTime
 
-    unsubscribe2()
+    unsubscribe3()
 
     jest.runAllTimers()
 
     const publishThirdTime = jest.fn()
     instance.endpoint.updateSubscriptions = publishThirdTime
+
+    unsubscribe2()
+
+    jest.runAllTimers()
+
+    const publishFourthTime = jest.fn()
+    instance.endpoint.updateSubscriptions = publishFourthTime
 
     unsubscribe1()
 
@@ -253,10 +263,11 @@ describe('Feed - subscriptions time series', () => {
     expect(publishFirstTime).toBeCalledWith({
       addTimeSeries: {
         [eventType]: [
-          { eventSymbol: '1', fromTime: fromTime1 },
+          { eventSymbol: '1' },
           { eventSymbol: '2', fromTime: fromTime2 },
-          { eventSymbol: '3', fromTime: fromTime2 },
-          { eventSymbol: '4', fromTime: fromTime1 },
+          { eventSymbol: '3', fromTime: fromTime3 },
+          { eventSymbol: '4', fromTime: fromTime3 },
+          { eventSymbol: '5', fromTime: fromTime2 },
         ],
       },
     })
@@ -265,14 +276,22 @@ describe('Feed - subscriptions time series', () => {
     expect(publishSecondTime).toBeCalledWith({
       addTimeSeries: {
         [eventType]: [
-          { eventSymbol: '2', fromTime: fromTime1 },
-          { eventSymbol: '3', fromTime: fromTime1 },
+          { eventSymbol: '3', fromTime: fromTime2 },
+          { eventSymbol: '4', fromTime: fromTime2 },
         ],
       },
     })
 
     expect(publishThirdTime).toBeCalledTimes(1)
     expect(publishThirdTime).toBeCalledWith({
+      addTimeSeries: {
+        [eventType]: [{ eventSymbol: '2' }],
+      },
+      removeTimeSeries: { [eventType]: ['3', '4', '5'] },
+    })
+
+    expect(publishFourthTime).toBeCalledTimes(1)
+    expect(publishFourthTime).toBeCalledWith({
       removeTimeSeries: { [eventType]: symbolsSet1 },
     })
   })
