@@ -48,4 +48,6 @@ dist
 
 .npmrc
 
+.idea
+
 /lib

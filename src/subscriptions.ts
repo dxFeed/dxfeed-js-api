@@ -26,7 +26,7 @@ import {
 } from './utils'
 
 interface ITimeSeriesOptions {
-  fromTime: number
+  fromTime: number | undefined
 }
 
 type Queue = {
@@ -193,11 +193,13 @@ export class Subscriptions {
   subscribeTimeSeries<TEvent extends ITimeSeriesEvent = ITimeSeriesEvent>(
     eventTypes: EventType[],
     eventSymbols: string[],
-    fromTime: number,
+    fromTime: number | undefined,
     onChange: (event: TEvent) => void
   ) {
+    const fromTimeRestriction = fromTime === undefined ? Date.now() : fromTime
+
     const handleEvent = (event: TEvent) => {
-      if (event.time >= fromTime) {
+      if (event.time >= fromTimeRestriction) {
         onChange(event)
       }
     }
@@ -221,11 +223,13 @@ export class Subscriptions {
         subscription.listeners.push(handleEvent /* FIXME */ as any)
         subscription.fromTimes.push(fromTime)
 
-        /*
-         * Cases when incoming subscription timestamp is the same must trigger subscription too
-         * (e.g. two simultaneous subscriptions coming from different clients)
-         */
-        if (fromTime <= subscription.fromTime) {
+        if (fromTime === undefined && subscription.fromTimes.length === 1) {
+          this.addTimeSeriesQueue(eventType, eventSymbol, { fromTime: undefined })
+          /*
+           * Cases when incoming subscription timestamp is the same must trigger subscription too
+           * (e.g. two simultaneous subscriptions coming from different clients)
+           */
+        } else if (fromTime !== undefined && fromTime <= subscription.fromTime) {
           subscription.fromTime = fromTime
 
           this.addTimeSeriesQueue(eventType, eventSymbol, {
@@ -248,10 +252,14 @@ export class Subscriptions {
         eventSymbols.forEach((eventSymbol) => {
           const subscription = this.timeSeriesSubscriptions[eventType][eventSymbol]
 
+          const itemIndex = subscription.listeners.findIndex((listener) => listener === handleEvent)
           // Remove time from list
-          subscription.fromTimes.splice(subscription.fromTimes.indexOf(fromTime), 1)
+          subscription.fromTimes.splice(itemIndex, 1)
 
-          const newListeners = subscription.listeners.filter((listener) => listener !== handleEvent)
+          const newListeners = subscription.listeners
+            .slice(0, itemIndex)
+            .concat(subscription.listeners.slice(itemIndex + 1, subscription.listeners.length))
+
           if (newListeners.length === 0) {
             delete this.timeSeriesSubscriptions[eventType][eventSymbol]
 
@@ -265,15 +273,20 @@ export class Subscriptions {
             subscription.listeners = newListeners
 
             const newFromTime = subscription.fromTimes.reduce(
-              (result, time) => (fromTime < result ? time : result),
+              (result, time) => (fromTime !== undefined && fromTime < result ? time : result),
               Number.POSITIVE_INFINITY
             )
             if (subscription.fromTime !== newFromTime) {
               subscription.fromTime = newFromTime
 
-              this.addTimeSeriesQueue(eventType, eventSymbol, {
-                fromTime: newFromTime,
-              })
+              const options =
+                newFromTime === Number.POSITIVE_INFINITY
+                  ? { fromTime: undefined }
+                  : {
+                      fromTime: newFromTime,
+                    }
+
+              this.addTimeSeriesQueue(eventType, eventSymbol, options)
             }
           }
         })

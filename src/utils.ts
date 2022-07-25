@@ -25,18 +25,26 @@ export const toBooleanCometdSub = <T>(sub: CometdSeries<T>) =>
     return acc
   }, {} as CometdSeries<boolean>)
 
-function timeSeriesSubSetToList(obj: Record<string, { fromTime: number }>) {
-  return Object.keys(obj).map((key) => ({
-    eventSymbol: key,
-    fromTime: obj[key].fromTime,
-  }))
+function timeSeriesSubSetToList(obj: Record<string, { fromTime?: number }>) {
+  return Object.keys(obj).map((key) => {
+    if (obj[key].fromTime !== undefined) {
+      return {
+        eventSymbol: key,
+        fromTime: obj[key].fromTime,
+      }
+    }
+
+    return {
+      eventSymbol: key,
+    }
+  })
 }
 
-export function timeSeriesSubMapToSetOfLists(sub: CometdSeries<{ fromTime: number }>) {
+export function timeSeriesSubMapToSetOfLists(sub: CometdSeries<{ fromTime?: number }>) {
   return Object.entries(sub).reduce((acc, value) => {
     acc[value[0]] = timeSeriesSubSetToList(value[1])
     return acc
-  }, {} as Record<string, { fromTime: number; eventSymbol: string }[]>)
+  }, {} as Record<string, { fromTime?: number; eventSymbol: string }[]>)
 }
 
 export const isEmptySet = (obj: object) => Object.keys(obj).length === 0
