@@ -9,6 +9,7 @@ export enum EventType {
   Quote = 'Quote',
   Candle = 'Candle',
   Trade = 'Trade',
+  TradeETH = 'TradeETH',
   Summary = 'Summary',
   Profile = 'Profile',
   Greeks = 'Greeks',
