@@ -1,4 +1,4 @@
-import { parseEventFlags } from './event-flags'
+import { parseEventFlags } from './eventFlags'
 import { ITimeSeriesEvent } from './interfaces'
 
 // AggregationEvent

@@ -7,7 +7,7 @@
 
 jest.mock('./endpoint')
 
-import { REMOVE_EVENT_FLAG, SNAPSHOT_SNIP_FLAG, TX_PENDING_FLAG } from './event-flags'
+import { REMOVE_EVENT_FLAG, SNAPSHOT_SNIP_FLAG, TX_PENDING_FLAG } from './eventFlags'
 import Feed from './feed'
 import { EventType, IncomingData } from './interfaces'
 import { AbortedError, TimeoutError } from './feed'

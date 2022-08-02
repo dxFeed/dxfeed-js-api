@@ -11,7 +11,7 @@ import { Subscriptions } from './subscriptions'
 import {
   isFinishedTimeSeriesAggregationResult,
   newTimeSeriesAggregator,
-} from './time-series-aggregator'
+} from './timeSeriesAggregator'
 import { newPromiseWithResource } from './utils'
 
 /* tslint:disable:max-classes-per-file */
