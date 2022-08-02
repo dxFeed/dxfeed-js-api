@@ -9,7 +9,7 @@
 import * as React from 'react'
 import { Helmet } from 'react-helmet-async'
 
-import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles'
+import { createTheme, ThemeProvider } from '@material-ui/core/styles'
 import { useColorMode } from 'theme-ui'
 
 // The doc prop contains some metadata about the page being rendered that you can use.
@@ -17,7 +17,7 @@ const Wrapper: React.FunctionComponent = ({ children }) => {
   const [colorMode] = useColorMode()
   const theme = React.useMemo(
     () =>
-      createMuiTheme({
+      createTheme({
         palette: {
           type: colorMode as 'light' | 'dark',
         },
