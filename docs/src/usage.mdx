@@ -43,7 +43,7 @@ You should specify event types and symbol names.
 feed.subscribe<{ value: number }>(
     [EventType.Summary, EventType.Trade], /* event types */
     ['AEX.IND:TEI'], /* symbols */
-    handleEvent
+  handleEvent
 )
 ```
 
@@ -55,14 +55,14 @@ feed.subscribeTimeSeries<{ value: number }>(
     [EventType.Summary, EventType.Trade], /* event types */
     ['AEX.IND:TEI'], /* symbols */
     0, /* fromTime */
-    handleEvent
+  handleEvent
 )
 ```
 
 Last argument its event handler for process incoming events.
 ```ts
 const handleEvent = event => {
-    /* process event */
+  /* process event */
 }
 ```
 
@@ -72,6 +72,22 @@ All subscribe methods return unsubscribe handler, you need to call this method f
 const unsubscribe = feed.subscribe(eventTypes, symbols, handleEvent)
 
 onExit(() => unsubscribe())
+```
+
+## Promise API
+
+### Get TimeSeries
+
+If you want to get TimeSeries events for a given time period, refer to example below.
+
+```typescript
+// inside async function
+const events = await feed.getTimeSeries(
+  'AAPL{=15m}',
+  EventType.Candle,
+  fromDate.getTime(),
+  toDate.getTime()
+)
 ```
 
 ## Close connection

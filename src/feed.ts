@@ -8,6 +8,15 @@
 import { Endpoint } from './endpoint'
 import { EventType, IEvent, ITimeSeriesEvent } from './interfaces'
 import { Subscriptions } from './subscriptions'
+import {
+  isFinishedTimeSeriesAggregationResult,
+  newTimeSeriesAggregator,
+} from './timeSeriesAggregator'
+import { newPromiseWithResource } from './utils'
+
+/* tslint:disable:max-classes-per-file */
+export class TimeoutError extends Error {}
+export class AbortedError extends Error {}
 
 class Feed {
   endpoint: Endpoint
@@ -42,6 +51,60 @@ class Feed {
     fromTime: number,
     onChange: (event: TEvent) => void
   ) => this.subscriptions.subscribeTimeSeries(eventTypes, eventSymbols, fromTime, onChange)
+
+  /**
+   * requires that incoming events have index, time and eventFlags to work correctly
+   *
+   * (!) expected that this method is not used alongside Feed.subscribeTimeSeries, it may not work correctly
+   *
+   * @param fromTime - A Number representing the milliseconds elapsed since the UNIX epoch
+   * @param toTime - A Number representing the milliseconds elapsed since the UNIX epoch
+   * @param options - default options has 15 seconds timeout
+   */
+  getTimeSeries = <TEvent extends ITimeSeriesEvent>(
+    eventSymbol: string,
+    eventType: EventType,
+    fromTime: number,
+    toTime: number,
+    options?: {
+      signal?: AbortController['signal']
+      timeoutMs?: number
+    }
+  ): Promise<TEvent[]> =>
+    newPromiseWithResource((resolve, reject, useResource) => {
+      useResource(() => {
+        const timeoutId = setTimeout(() => {
+          reject(new TimeoutError())
+        }, options?.timeoutMs ?? 15_000)
+        return () => clearTimeout(timeoutId)
+      })
+
+      useResource(() => {
+        const abortSignalListener = () => reject(new AbortedError())
+        options?.signal?.addEventListener('abort', abortSignalListener)
+
+        return () => options?.signal?.removeEventListener('abort', abortSignalListener)
+      })
+
+      useResource(() => {
+        const aggregator = newTimeSeriesAggregator<TEvent>(fromTime, toTime)
+
+        const handleEvent = (event: TEvent) => {
+          const result = aggregator.newEvent(event)
+
+          if (isFinishedTimeSeriesAggregationResult(result)) resolve(result.events)
+        }
+
+        const unsubscribeTimeSeries = this.subscriptions.subscribeTimeSeries<TEvent>(
+          [eventType],
+          [eventSymbol],
+          fromTime,
+          handleEvent
+        )
+
+        return () => unsubscribeTimeSeries()
+      })
+    })
 }
 
 export default Feed
