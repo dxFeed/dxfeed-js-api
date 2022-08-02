@@ -81,6 +81,22 @@ const unsubscribe = feed.subscribe(eventTypes, symbols, handleEvent)
 onExit(() => unsubscribe())
 ```
 
+## Promise API
+
+### Get TimeSeries
+
+If you want to get TimeSeries events for a given time period, refer to example below.
+
+```ts
+// inside async function
+const events = await feed.getTimeSeries(
+  'AAPL{=15m}',
+  EventType.Candle,
+  fromDate.getTime(),
+  toDate.getTime()
+)
+```
+
 ## Close connection
 If you need to close the web socket connection
 ```ts
