@@ -50,3 +50,49 @@ export const splitChunks = <Value>(values: Value[], chunkSize: number) => {
 
   return results
 }
+
+type Cleanup = () => void
+/**
+ * regular promise creator but with the ability to handle code that requires cleanup in a simpler way
+ *
+ * @example
+ * // setup promise that will be rejected after 5 seconds
+ * newPromiseWithResource((resolve, reject, useResource) => {
+ *   useResource(() => {
+ *     const id = setTimeout(() => reject('Timeout'), 5_000)
+ *     return () => clearTimeout(id)
+ *   })
+ *   // additional body steps, like http requests
+ * })
+ */
+export const newPromiseWithResource = <T>(
+  executor: (
+    resolve: (value: T) => void,
+    reject: (reason: unknown) => void,
+    useResource: (resourceFn: () => Cleanup) => void
+  ) => void
+): Promise<T> => {
+  const cleanups: Cleanup[] = []
+
+  const cleanup = () => {
+    cleanups.forEach((cleanup) => cleanup())
+  }
+
+  return new Promise((resolve, reject) => {
+    const useResource = (resourceFn: () => Cleanup) => {
+      const cleanup = resourceFn()
+      cleanups.push(cleanup)
+    }
+
+    const resolveWithCleanup = (value: T) => {
+      cleanup()
+      resolve(value)
+    }
+    const rejectWithCleanup = (reason: unknown) => {
+      cleanup()
+      reject(reason)
+    }
+
+    executor(resolveWithCleanup, rejectWithCleanup, useResource)
+  })
+}
