@@ -7,10 +7,9 @@
 
 jest.mock('./endpoint')
 
-import { REMOVE_EVENT_FLAG, SNAPSHOT_SNIP_FLAG, TX_PENDING_FLAG } from './eventFlags'
-import Feed from './feed'
+import { EventFlag } from './eventFlags'
+import Feed, { AbortedError, TimeoutError } from './feed'
 import { EventType, IncomingData } from './interfaces'
-import { AbortedError, TimeoutError } from './feed'
 
 describe('Feed', () => {
   let instance: Feed
@@ -288,17 +287,16 @@ describe('Feed - promises time series', () => {
     instance = new Feed()
   })
 
-  const newMockDataHead = (eventType: EventType): [EventType, string[]] => {
-    return [eventType, ['eventSymbol', 'eventTime', 'eventFlags', 'index', 'time']]
-  }
+  const newMockDataHead = (eventType: EventType): [EventType, string[]] => [
+    eventType,
+    ['eventSymbol', 'eventTime', 'eventFlags', 'index', 'time'],
+  ]
   const newMockDataBody = (
     eventSymbol: string,
     time: number,
     eventFlags: number,
     index: number
-  ): (string | number)[] => {
-    return [eventSymbol, 0, eventFlags, index, time]
-  }
+  ): (string | number)[] => [eventSymbol, 0, eventFlags, index, time]
 
   describe('aggregation logic', () => {
     const ONE_DAY = 1000 * 60 * 60 * 24
@@ -319,7 +317,7 @@ describe('Feed - promises time series', () => {
         newMockDataHead(EVENT_TYPE),
         [
           ...newMockDataBody(SYMBOL, TO_TIME - ONE_DAY, 0, 0),
-          ...newMockDataBody(SYMBOL, TO_TIME - ONE_DAY * 2, SNAPSHOT_SNIP_FLAG, 1),
+          ...newMockDataBody(SYMBOL, TO_TIME - ONE_DAY * 2, EventFlag.SnapshotSnip, 1),
         ],
       ])
 
@@ -358,7 +356,7 @@ describe('Feed - promises time series', () => {
           ...newMockDataBody(SYMBOL, TO_TIME - ONE_DAY, 0, 1),
           ...newMockDataBody(SYMBOL, TO_TIME - 1, 0, 50),
           ...newMockDataBody(SYMBOL, TO_TIME - 2, 0, 10),
-          ...newMockDataBody(SYMBOL, TO_TIME - 3, SNAPSHOT_SNIP_FLAG, 100),
+          ...newMockDataBody(SYMBOL, TO_TIME - 3, EventFlag.SnapshotSnip, 100),
         ],
       ])
 
@@ -379,8 +377,8 @@ describe('Feed - promises time series', () => {
         newMockDataHead(EVENT_TYPE),
         [
           ...newMockDataBody(SYMBOL, TO_TIME - ONE_DAY, 0, 0),
-          ...newMockDataBody(SYMBOL, FROM_TIME, TX_PENDING_FLAG, 1),
-          ...newMockDataBody(SYMBOL, TO_TIME - 1, TX_PENDING_FLAG, 2),
+          ...newMockDataBody(SYMBOL, FROM_TIME, EventFlag.TxPending, 1),
+          ...newMockDataBody(SYMBOL, TO_TIME - 1, EventFlag.TxPending, 2),
           ...newMockDataBody(SYMBOL, FROM_TIME, 0, 3),
         ],
       ])
@@ -401,8 +399,8 @@ describe('Feed - promises time series', () => {
         newMockDataHead(EVENT_TYPE),
         [
           ...newMockDataBody(SYMBOL, TO_TIME - ONE_DAY, 0, 0),
-          ...newMockDataBody(SYMBOL, TO_TIME - ONE_DAY, REMOVE_EVENT_FLAG, 0),
-          ...newMockDataBody(SYMBOL, TO_TIME - 2 * ONE_DAY, SNAPSHOT_SNIP_FLAG, 1),
+          ...newMockDataBody(SYMBOL, TO_TIME - ONE_DAY, EventFlag.RemoveEvent, 0),
+          ...newMockDataBody(SYMBOL, TO_TIME - 2 * ONE_DAY, EventFlag.SnapshotSnip, 1),
         ],
       ])
 
@@ -422,7 +420,7 @@ describe('Feed - promises time series', () => {
           ...newMockDataBody(SYMBOL, FROM_TIME - 1, 0, 1),
           ...newMockDataBody(SYMBOL, FROM_TIME - 2, 0, 2),
           ...newMockDataBody(SYMBOL, TO_TIME - ONE_DAY - 1, 0, 3),
-          ...newMockDataBody(SYMBOL, TO_TIME - ONE_DAY - 2, SNAPSHOT_SNIP_FLAG, 4),
+          ...newMockDataBody(SYMBOL, TO_TIME - ONE_DAY - 2, EventFlag.SnapshotSnip, 4),
         ],
       ])
 
@@ -494,7 +492,7 @@ describe('Feed - promises time series', () => {
       instance.endpoint.handlers?.onData?.(
         [
           newMockDataHead(EventType.Candle),
-          newMockDataBody('AAPL', new Date().getTime(), SNAPSHOT_SNIP_FLAG, 0),
+          newMockDataBody('AAPL', new Date().getTime(), EventFlag.SnapshotSnip, 0),
         ],
         true
       )

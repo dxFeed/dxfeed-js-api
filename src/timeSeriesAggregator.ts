@@ -1,3 +1,10 @@
+/** @license
+ * Copyright ©2020 Devexperts LLC. All rights reserved.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+ * If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 import { parseEventFlags } from './eventFlags'
 import { ITimeSeriesEvent } from './interfaces'
 
@@ -44,7 +51,7 @@ export interface TimeSeriesAggregator<TEvent extends ITimeSeriesEvent> {
 export const newTimeSeriesAggregator = <TEvent extends ITimeSeriesEvent>(
   fromTime: number,
   toTime: number
-) => {
+): TimeSeriesAggregator<TEvent> => {
   let complete = false
   let txPending = false
   const events: Record<number, AggregationEvent<TEvent>> = {}

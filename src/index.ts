@@ -6,5 +6,6 @@
  */
 
 export * from './interfaces'
+export * from './eventFlags'
 
 export { default } from './feed'
