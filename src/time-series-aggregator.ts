@@ -14,9 +14,9 @@ type AggregationEvent<TEvent extends ITimeSeriesEvent> = TEvent & {
 const isAggregationEvent = <TEvent extends ITimeSeriesEvent>(
   event: TEvent
 ): event is AggregationEvent<TEvent> =>
-  typeof event['time'] === 'number' &&
-  typeof event['index'] === 'number' &&
-  typeof event['eventFlags'] === 'number'
+  typeof event.time === 'number' &&
+  typeof event.index === 'number' &&
+  typeof event.eventFlags === 'number'
 
 // TimeSeriesAggregationResult
 export interface ContinueTimeSeriesAggregationResult {
@@ -47,7 +47,7 @@ export const newTimeSeriesAggregator = <TEvent extends ITimeSeriesEvent>(
 ) => {
   let complete = false
   let txPending = false
-  let events: Record<number, AggregationEvent<TEvent>> = {}
+  const events: Record<number, AggregationEvent<TEvent>> = {}
 
   const isDone = () => complete && !txPending
 

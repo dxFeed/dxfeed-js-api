@@ -74,7 +74,7 @@ export const newPromiseWithResource = <T>(
 ): Promise<T> => {
   const cleanups: Cleanup[] = []
 
-  const cleanup = () => {
+  const cleanupAll = () => {
     cleanups.forEach((cleanup) => cleanup())
   }
 
@@ -85,11 +85,11 @@ export const newPromiseWithResource = <T>(
     }
 
     const resolveWithCleanup = (value: T) => {
-      cleanup()
+      cleanupAll()
       resolve(value)
     }
     const rejectWithCleanup = (reason: unknown) => {
-      cleanup()
+      cleanupAll()
       reject(reason)
     }
 

@@ -14,6 +14,7 @@ import {
 } from './time-series-aggregator'
 import { newPromiseWithResource } from './utils'
 
+/* tslint:disable:max-classes-per-file */
 export class TimeoutError extends Error {}
 export class AbortedError extends Error {}
 
@@ -69,8 +70,8 @@ class Feed {
       signal?: AbortController['signal']
       timeoutMs?: number
     }
-  ): Promise<TEvent[]> => {
-    return newPromiseWithResource((resolve, reject, useResource) => {
+  ): Promise<TEvent[]> =>
+    newPromiseWithResource((resolve, reject, useResource) => {
       useResource(() => {
         const timeoutId = setTimeout(() => {
           reject(new TimeoutError())
@@ -104,7 +105,6 @@ class Feed {
         return () => unsubscribeTimeSeries()
       })
     })
-  }
 }
 
 export default Feed

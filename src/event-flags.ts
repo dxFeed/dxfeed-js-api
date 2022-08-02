@@ -12,6 +12,7 @@ export interface EventFlags {
   snapshotSnip: boolean
 }
 
+/* tslint:disable:no-bitwise */
 export const parseEventFlags = (flags: number): EventFlags => ({
   txPending: (flags & TX_PENDING_FLAG) > 0,
   shouldBeRemoved: (flags & REMOVE_EVENT_FLAG) > 0,
