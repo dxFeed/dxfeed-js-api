@@ -143,6 +143,7 @@ function Playground() {
         language="js"
         code={`() => {
   const [play, setPlay] = React.useState(false)
+  const [forceUpdate, setForceUpdate] = React.useState(0)
   const [events, setEvents] = React.useState([])
   const handleEvent = React.useCallback((event) => {
     setEvents((prevState) => [...prevState, event])
@@ -165,13 +166,18 @@ function Playground() {
       }
     }
     return () => unsubscribe && unsubscribe()
-  }, [play])
+  }, [play, forceUpdate])
 
   return (
     <>
       <Button variant="outlined" onClick={() => setPlay(!play)}>
         {play ? 'Stop' : 'Start'}
       </Button>
+      {play && (
+        <Button variant="outlined" onClick={() => setForceUpdate({})}>
+          Resubscribe
+        </Button>
+      )}
       <DataViewer play={play} events={events} />
     </>
   )
