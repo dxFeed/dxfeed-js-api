@@ -17,6 +17,7 @@ type DataChangeHandler = (message: IncomingData, timeSeries: boolean) => void
 export class Endpoint {
   cometd: CometD | null = null
   authToken: string | null = null
+  connectionAlive: boolean = false
 
   handlers: {
     onStateChange?: StateChangeHandler
@@ -32,17 +33,18 @@ export class Endpoint {
   }
 
   private updateConnectedState(connected: boolean) {
-    if (this.isConnected() !== connected) {
+    if (this.connectionAlive !== connected) {
+      this.connectionAlive = connected
       this.handlers?.onStateChange({ connected })
     }
   }
 
   private onMetaUpdate = (message: Message) => {
     if (!this.isConnected()) {
-      this.updateConnectedState(false)
-    } else {
-      this.updateConnectedState(message.successful)
+      return this.updateConnectedState(false)
     }
+
+    this.updateConnectedState(message.successful)
   }
 
   private onMetaUnsuccessful = () => {
