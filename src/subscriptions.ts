@@ -96,6 +96,7 @@ export class Subscriptions {
       queue.remove = {}
       queue.addTimeSeries = this.timeSeriesSubscriptions
       queue.removeTimeSeries = {}
+      queue.reset = false
     }
 
     if (!isEmptySet(queue.add)) {
