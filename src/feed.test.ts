@@ -165,7 +165,7 @@ describe('Feed - subscriptions', () => {
     expect(publishSecondTime).toBeCalledTimes(1)
     expect(publishSecondTime).toBeCalledWith({
       add: { [eventType]: symbolsSet2 },
-      remove: { [eventType]: ['1', '4'] },
+      remove: { [eventType]: symbolsSet1 },
     })
   })
 

@@ -154,10 +154,26 @@ export class Subscriptions {
         // Add listeners
         this.subscriptions[eventType][eventSymbol].listeners.push(onChange /* FIXME */ as any)
 
-        // Delete from remove queue
-        if (this.queue.remove[eventType]) {
-          delete this.queue.remove[eventType][eventSymbol]
-        }
+        /**
+         * When backend receives message with `add` for the first time for symbol subscription, it immediately
+         * pushes last ticker's value to a subscriber. The same is relevant for situation when backend receives
+         * message with `remove`, and then, some ticks later, it receives another message with `add`.
+         *
+         * If `add` and `remove` are sent in one message, backend treats them in the following order: first remove
+         * subscription, then add it back and push last value of ticker into it.
+         * 
+         * When code below is not commented out, it deletes `remove` from message in situation
+         * when `add` and `remove` occur in one tick. This makes backend treat message as "update subscription",
+         * which effectively means "do nothing". New subscriber won't receive last value of ticker because subscription
+         * already exists, and will only receive the next ticker update.
+         * 
+         * This sometimes leads to cases when ticker appears empty for new subscribers of a rarely updated symbols.
+         * (Related issue: EN-4718)
+         */
+
+        // if (this.queue.remove[eventType]) {
+        //   delete this.queue.remove[eventType][eventSymbol]
+        // }
 
         this.addQueue(eventType, eventSymbol)
       })
