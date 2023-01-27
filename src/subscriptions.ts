@@ -53,7 +53,7 @@ const createDefaultQueue = (): Queue => ({
   removeTimeSeries: {},
 })
 
-const MAX_ACTIONS_SIZE = 200
+const MAX_QUEUE_SIZE = 200
 
 export class Subscriptions {
   endpoint: Endpoint
@@ -116,13 +116,14 @@ export class Subscriptions {
     }
   }
 
-  sendSubLater() {
-    if (this.queue.count > MAX_ACTIONS_SIZE) {
+  scheduleSendSub() {
+    // if queue is full, send it immediately
+    if (this.queue.count > MAX_QUEUE_SIZE) {
+      // Clear scheduled sendSub
       if (this.sendSubTimeout !== null) {
         clearTimeout(this.sendSubTimeout)
         this.sendSubTimeout = null
       }
-
       return this.sendSub()
     }
 
@@ -161,12 +162,12 @@ export class Subscriptions {
          *
          * If `add` and `remove` are sent in one message, backend treats them in the following order: first remove
          * subscription, then add it back and push last value of ticker into it.
-         * 
+         *
          * When code below is not commented out, it deletes `remove` from message in situation
          * when `add` and `remove` occur in one tick. This makes backend treat message as "update subscription",
          * which effectively means "do nothing". New subscriber won't receive last value of ticker because subscription
          * already exists, and will only receive the next ticker update.
-         * 
+         *
          * This sometimes leads to cases when ticker appears empty for new subscribers of a rarely updated symbols.
          * (Related issue: EN-4718)
          */
@@ -175,11 +176,9 @@ export class Subscriptions {
         //   delete this.queue.remove[eventType][eventSymbol]
         // }
 
-        this.addQueue(eventType, eventSymbol)
+        this.queueAction('add', eventType, eventSymbol)
       })
     })
-
-    this.sendSubLater()
 
     // Return unsubscribe handler
     return () => {
@@ -196,14 +195,12 @@ export class Subscriptions {
               delete this.queue.add[eventType][eventSymbol]
             }
 
-            this.removeQueue(eventType, eventSymbol)
+            this.queueAction('remove', eventType, eventSymbol)
           } else {
             subscription.listeners = newListeners
           }
         })
       })
-
-      this.sendSubLater()
     }
   }
 
@@ -238,6 +235,11 @@ export class Subscriptions {
         subscription.listeners.push(handleEvent /* FIXME */ as any)
         subscription.fromTimes.push(fromTime)
 
+        // Delete from remove queue
+        if (this.queue.removeTimeSeries[eventType]) {
+          delete this.queue.removeTimeSeries[eventType][eventSymbol]
+        }
+
         /*
          * Cases when incoming subscription timestamp is the same must trigger subscription too
          * (e.g. two simultaneous subscriptions coming from different clients)
@@ -245,19 +247,12 @@ export class Subscriptions {
         if (fromTime <= subscription.fromTime) {
           subscription.fromTime = fromTime
 
-          this.addTimeSeriesQueue(eventType, eventSymbol, {
+          this.queueTimeSeriesAction('add', eventType, eventSymbol, {
             fromTime,
           })
         }
-
-        // Delete from remove queue
-        if (this.queue.removeTimeSeries[eventType]) {
-          delete this.queue.removeTimeSeries[eventType][eventSymbol]
-        }
       })
     })
-
-    this.sendSubLater()
 
     // Return unsubscribe handler
     return () => {
@@ -277,7 +272,7 @@ export class Subscriptions {
               delete this.queue.addTimeSeries[eventType][eventSymbol]
             }
 
-            this.removeTimeSeriesQueue(eventType, eventSymbol)
+            this.queueTimeSeriesAction('remove', eventType, eventSymbol)
           } else {
             subscription.listeners = newListeners
 
@@ -288,22 +283,20 @@ export class Subscriptions {
             if (subscription.fromTime !== newFromTime) {
               subscription.fromTime = newFromTime
 
-              this.addTimeSeriesQueue(eventType, eventSymbol, {
+              this.queueTimeSeriesAction('add', eventType, eventSymbol, {
                 fromTime: newFromTime,
               })
             }
           }
         })
       })
-
-      this.sendSubLater()
     }
   }
 
   private onStateChange = (stateChange: Partial<IFeedImplState>) => {
     if (stateChange.connected) {
       this.queue.reset = true
-      this.sendSubLater()
+      this.scheduleSendSub()
     }
 
     Object.entries(stateChange).forEach(([key, val]) => {
@@ -311,56 +304,47 @@ export class Subscriptions {
     })
   }
 
-  private addQueue = (eventType: EventType, eventSymbol: string) => {
-    this.queue.add = {
-      ...this.queue.add,
+  private queueAction = (action: 'add' | 'remove', eventType: EventType, eventSymbol: string) => {
+    this.queue[action] = {
+      ...this.queue[action],
       [eventType]: {
-        ...this.queue.add[eventType],
+        ...this.queue[action][eventType],
         [eventSymbol]: true,
       },
     }
 
     this.queue.count++
+
+    this.scheduleSendSub()
   }
 
-  private removeQueue = (eventType: EventType, eventSymbol: string) => {
-    this.queue.remove = {
-      ...this.queue.remove,
-      [eventType]: {
-        ...this.queue.remove[eventType],
-        [eventSymbol]: true,
-      },
-    }
-
-    this.queue.count++
-  }
-
-  private addTimeSeriesQueue = (
+  private queueTimeSeriesAction = (
+    action: 'add' | 'remove',
     eventType: EventType,
     eventSymbol: string,
-    options: ITimeSeriesOptions
+    options?: ITimeSeriesOptions
   ) => {
-    this.queue.addTimeSeries = {
-      ...this.queue.addTimeSeries,
-      [eventType]: {
-        ...this.queue.addTimeSeries[eventType],
-        [eventSymbol]: options,
-      },
+    if (action === 'add') {
+      this.queue.addTimeSeries = {
+        ...this.queue.addTimeSeries,
+        [eventType]: {
+          ...this.queue.addTimeSeries[eventType],
+          [eventSymbol]: options,
+        },
+      }
+    } else {
+      this.queue.removeTimeSeries = {
+        ...this.queue.removeTimeSeries,
+        [eventType]: {
+          ...this.queue.removeTimeSeries[eventType],
+          [eventSymbol]: true,
+        },
+      }
     }
 
     this.queue.count++
-  }
 
-  private removeTimeSeriesQueue = (eventType: EventType, eventSymbol: string) => {
-    this.queue.removeTimeSeries = {
-      ...this.queue.removeTimeSeries,
-      [eventType]: {
-        ...this.queue.removeTimeSeries[eventType],
-        [eventSymbol]: true,
-      },
-    }
-
-    this.queue.count++
+    this.scheduleSendSub()
   }
 
   private onData = ([headData, bodyData]: IncomingData, timeSeries: boolean) => {

@@ -206,6 +206,27 @@ describe('Feed - subscriptions', () => {
       add: { [eventType]: symbolsSet2 },
     })
   })
+
+  it('should send subscription immediately if queue is full', () => {
+    const publishFirstTime = jest.fn()
+    instance.endpoint.updateSubscriptions = publishFirstTime
+
+    const longSymbolSet = new Array(400).fill(0).map((_, idx) => idx.toString())
+    const unsubscribe = createSubscription(longSymbolSet)
+
+    jest.runAllTimers()
+
+    const publishSecondTime = jest.fn()
+    instance.endpoint.updateSubscriptions = publishSecondTime
+
+    unsubscribe()
+
+    jest.runAllTimers()
+
+    expect(publishFirstTime).toBeCalledTimes(2)
+
+    expect(publishSecondTime).toBeCalledTimes(2)
+  })
 })
 
 describe('Feed - subscriptions time series', () => {
@@ -276,6 +297,27 @@ describe('Feed - subscriptions time series', () => {
     expect(publishThirdTime).toBeCalledWith({
       removeTimeSeries: { [eventType]: symbolsSet1 },
     })
+  })
+
+  it('should send subscription immediately if queue is full', () => {
+    const publishFirstTime = jest.fn()
+    instance.endpoint.updateSubscriptions = publishFirstTime
+
+    const longSymbolSet = new Array(400).fill(0).map((_, idx) => idx.toString())
+    const unsubscribe = createSubscriptionTimeSeries(longSymbolSet, 0)
+
+    jest.runAllTimers()
+
+    const publishSecondTime = jest.fn()
+    instance.endpoint.updateSubscriptions = publishSecondTime
+
+    unsubscribe()
+
+    jest.runAllTimers()
+
+    expect(publishFirstTime).toBeCalledTimes(2)
+
+    expect(publishSecondTime).toBeCalledTimes(2)
   })
 })
 
