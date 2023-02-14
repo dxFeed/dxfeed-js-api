@@ -1,6 +1,6 @@
 {
   "name": "@dxfeed/api",
-  "version": "1.4.0",
+  "version": "1.4.0-develop.1673374507870",
   "description": "This package provides access to dxFeed streaming data",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

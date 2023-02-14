@@ -78,3 +78,10 @@ export interface ISubscribeMessage {
   addTimeSeries?: ITimeSeriesList
   removeTimeSeries?: ISubscriptionList
 }
+
+type OnDemandMethod = 'replay' | 'setSpeed' | 'stopAndResume' | 'stopAndClear'
+
+export interface IOnDemandMessage {
+  args: (string | number)[]
+  op: OnDemandMethod
+}

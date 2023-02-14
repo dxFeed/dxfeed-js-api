@@ -6,7 +6,7 @@
  */
 
 import { Endpoint } from './endpoint'
-import { EventType, IEvent, ITimeSeriesEvent } from './interfaces'
+import { EventType, IEvent, IFeedImplState, IOnDemandMessage, ITimeSeriesEvent } from './interfaces'
 import { Subscriptions } from './subscriptions'
 import {
   isFinishedTimeSeriesAggregationResult,
@@ -51,6 +51,30 @@ class Feed {
     fromTime: number,
     onChange: (event: TEvent) => void
   ) => this.subscriptions.subscribeTimeSeries(eventTypes, eventSymbols, fromTime, onChange)
+
+  subscribeState = (onChange: (state: IFeedImplState) => void) =>
+    this.subscriptions.subscribeState(onChange)
+
+  invokeOnDemandMethod(method: 'stop'): void
+  invokeOnDemandMethod(method: 'clear'): void
+  invokeOnDemandMethod(method: 'pause'): void
+  invokeOnDemandMethod(method: 'setSpeed', speed: number): void
+  invokeOnDemandMethod(method: 'replay', fromTime: number): void
+  invokeOnDemandMethod(
+    method: 'replay' | 'pause' | 'stop' | 'clear' | 'setSpeed',
+    fromTimeOrSpeed?: number
+  ) {
+    const message = ((): IOnDemandMessage => {
+      if (method === 'pause') return { op: 'setSpeed', args: [0] }
+      if (method === 'stop') return { op: 'stopAndResume', args: [] }
+      if (method === 'clear') return { op: 'stopAndClear', args: [] }
+      if (method === 'setSpeed') return { op: 'setSpeed', args: [fromTimeOrSpeed] }
+      if (method === 'replay')
+        return { op: 'replay', args: [new Date(fromTimeOrSpeed).toISOString(), 1] }
+    })()
+
+    this.endpoint.invokeOnDemandService(message)
+  }
 
   /**
    * requires that incoming events have index, time and eventFlags to work correctly

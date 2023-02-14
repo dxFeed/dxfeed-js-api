@@ -8,7 +8,7 @@
 import { CometD, Configuration, Message } from 'cometd'
 
 import { HEADER_AUTH_TOKEN_KEY } from './config'
-import { IFeedImplState, IncomingData, ISubscribeMessage } from './interfaces'
+import { IFeedImplState, IncomingData, IOnDemandMessage, ISubscribeMessage } from './interfaces'
 
 type StateChangeHandler = (state: Partial<IFeedImplState>) => void
 
@@ -110,7 +110,11 @@ export class Endpoint {
     return this.publish('sub', message)
   }
 
-  private publish(service: 'sub', message: object) {
+  invokeOnDemandService(message: IOnDemandMessage) {
+    return this.publish('onDemand', message)
+  }
+
+  private publish(service: 'sub' | 'onDemand', message: object) {
     if (!this.cometd) {
       throw new Error('CometD not connected')
     }
