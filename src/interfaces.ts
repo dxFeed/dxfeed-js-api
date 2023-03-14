@@ -23,7 +23,7 @@ export enum EventType {
 export interface IEvent {
   eventType: EventType
   eventSymbol: string
-  [key: string]: string | number
+  [key: string]: string | number | boolean
 }
 
 export interface ITimeSeriesEvent extends IEvent {
