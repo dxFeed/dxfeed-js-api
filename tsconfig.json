@@ -10,12 +10,12 @@
     "module": "commonjs",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "outDir": "./lib",
     "types": ["jest"],
     "removeComments": false,
     "inlineSourceMap": true,
     "strict": true,
     "strictNullChecks": false,
+    "skipLibCheck": true,
     "target": "es2017"
   },
   "include": ["src"],

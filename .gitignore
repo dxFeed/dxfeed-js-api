@@ -49,3 +49,7 @@ dist
 .npmrc
 
 /lib
+
+#IDE
+.idea
+.vscode
