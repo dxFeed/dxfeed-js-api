@@ -302,6 +302,7 @@ export class Subscriptions {
   }
 
   subscribeState = (listener: (state: IFeedImplState) => void) => {
+    listener(this.state)
     this.stateSubscriptions.add(listener)
     return () => {
       this.stateSubscriptions.delete(listener)
@@ -404,7 +405,10 @@ export class Subscriptions {
         event[eventPropertyName] = values[eventPropertyIndex]
       })
 
-      subscription[event.eventSymbol]?.listeners.forEach((listener) => listener(event))
+      const subscriptionItem = subscription[event.eventSymbol]
+      if (subscriptionItem) {
+        subscriptionItem.listeners.forEach((listener) => listener(event))
+      }
     })
   }
 }

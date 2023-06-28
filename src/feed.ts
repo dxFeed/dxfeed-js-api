@@ -6,7 +6,7 @@
  */
 
 import { Endpoint } from './endpoint'
-import { EventType, IEvent, IFeedImplState, IOnDemandMessage, ITimeSeriesEvent } from './interfaces'
+import { EventType, IEvent, IFeedImplState, ITimeSeriesEvent } from './interfaces'
 import { Subscriptions } from './subscriptions'
 import {
   isFinishedTimeSeriesAggregationResult,
@@ -57,23 +57,48 @@ class Feed {
 
   invokeOnDemandMethod(method: 'stop'): void
   invokeOnDemandMethod(method: 'clear'): void
-  invokeOnDemandMethod(method: 'pause'): void
   invokeOnDemandMethod(method: 'setSpeed', speed: number): void
-  invokeOnDemandMethod(method: 'replay', fromTime: number): void
+  invokeOnDemandMethod(method: 'replay', speed: number, replayStartTime: number): void
   invokeOnDemandMethod(
-    method: 'replay' | 'pause' | 'stop' | 'clear' | 'setSpeed',
-    fromTimeOrSpeed?: number
+    method: 'replay' | 'stop' | 'clear' | 'setSpeed',
+    speed?: number,
+    replayStartTime?: number
   ) {
-    const message = ((): IOnDemandMessage => {
-      if (method === 'pause') return { op: 'setSpeed', args: [0] }
-      if (method === 'stop') return { op: 'stopAndResume', args: [] }
-      if (method === 'clear') return { op: 'stopAndClear', args: [] }
-      if (method === 'setSpeed') return { op: 'setSpeed', args: [fromTimeOrSpeed] }
-      if (method === 'replay')
-        return { op: 'replay', args: [new Date(fromTimeOrSpeed).toISOString(), 1] }
-    })()
+    if (!this.subscriptions.state.connected) {
+      throw new Error('Socket connection in not established')
+    }
 
-    this.endpoint.invokeOnDemandService(message)
+    if (!this.subscriptions.state.replaySupported) {
+      throw new Error('Replying in not supported')
+    }
+
+    if (method === 'setSpeed') {
+      this.endpoint.invokeOnDemandService({ op: 'setSpeed', args: [speed] }, () =>
+        this.endpoint.handlers.onStateChange?.({ speed })
+      )
+    } else if (method === 'replay') {
+      this.endpoint.invokeOnDemandService(
+        {
+          op: 'replay',
+          args: [new Date(replayStartTime).toISOString(), speed],
+        },
+        () =>
+          this.endpoint.handlers.onStateChange?.({
+            speed,
+            replay: true,
+            clear: false,
+            time: replayStartTime,
+          })
+      )
+    } else if (method === 'stop') {
+      this.endpoint.invokeOnDemandService({ op: 'stopAndResume', args: [] }, () =>
+        this.endpoint.handlers.onStateChange?.({ speed: 0, replay: false, clear: false, time: 0 })
+      )
+    } else if (method === 'clear') {
+      this.endpoint.invokeOnDemandService({ op: 'stopAndClear', args: [] }, () =>
+        this.endpoint.handlers.onStateChange?.({ speed: 0, replay: false, clear: true, time: 0 })
+      )
+    }
   }
 
   /**
