@@ -81,7 +81,7 @@ export class Subscriptions {
   constructor(endpoint: Endpoint) {
     this.endpoint = endpoint
 
-    endpoint.registerStateChangeHandler(this.onStateChange)
+    endpoint.registerStateChangeHandler(this.changeState)
     endpoint.registerDataChangeHandler(this.onData)
   }
 
@@ -309,7 +309,7 @@ export class Subscriptions {
     }
   }
 
-  private onStateChange = (stateChange: Partial<IFeedImplState>) => {
+  changeState = (stateChange: Partial<IFeedImplState>) => {
     if (stateChange.connected) {
       this.queue.reset = true
       this.sendSubLater()
