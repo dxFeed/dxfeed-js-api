@@ -5,8 +5,10 @@
  * If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+import { Message } from 'cometd'
+
 import { Endpoint } from './endpoint'
-import { EventType, IEvent, ITimeSeriesEvent } from './interfaces'
+import { EventType, IEvent, IFeedImplState, ITimeSeriesEvent } from './interfaces'
 import { Subscriptions } from './subscriptions'
 import {
   isFinishedTimeSeriesAggregationResult,
@@ -51,6 +53,51 @@ class Feed {
     fromTime: number,
     onChange: (event: TEvent) => void
   ) => this.subscriptions.subscribeTimeSeries(eventTypes, eventSymbols, fromTime, onChange)
+
+  subscribeState = (onChange: (state: IFeedImplState) => void) =>
+    this.subscriptions.subscribeState(onChange)
+
+  invokeOnDemandMethod(method: 'clear' | 'stop'): void
+  invokeOnDemandMethod(method: 'setSpeed', speed: number): void
+  invokeOnDemandMethod(method: 'replay', speed: number, replayStartTime: number): void
+  invokeOnDemandMethod(
+    method: 'replay' | 'stop' | 'clear' | 'setSpeed',
+    speed?: number,
+    replayStartTime?: number
+  ) {
+    if (!this.subscriptions.state.connected) {
+      throw new Error('Socket connection in not established')
+    }
+
+    if (!this.subscriptions.state.replaySupported) {
+      throw new Error('Replying in not supported')
+    }
+
+    const changeStateIfSuccess = (state: Partial<IFeedImplState>) => ({ successful }: Message) =>
+      successful && this.subscriptions.changeState(state)
+
+    if (method === 'setSpeed') {
+      this.endpoint.invokeOnDemandService(
+        { op: 'setSpeed', args: [speed] },
+        changeStateIfSuccess({ speed })
+      )
+    } else if (method === 'replay') {
+      this.endpoint.invokeOnDemandService(
+        { op: 'replay', args: [new Date(replayStartTime).toISOString(), speed] },
+        changeStateIfSuccess({ speed, replay: true, clear: false, time: replayStartTime })
+      )
+    } else if (method === 'stop') {
+      this.endpoint.invokeOnDemandService(
+        { op: 'stopAndResume', args: [] },
+        changeStateIfSuccess({ speed: 0, replay: false, clear: false, time: 0 })
+      )
+    } else if (method === 'clear') {
+      this.endpoint.invokeOnDemandService(
+        { op: 'stopAndClear', args: [] },
+        changeStateIfSuccess({ speed: 0, replay: false, clear: true, time: 0 })
+      )
+    }
+  }
 
   /**
    * requires that incoming events have index, time and eventFlags to work correctly

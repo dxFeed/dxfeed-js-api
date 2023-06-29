@@ -5,10 +5,10 @@
  * If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-import { CometD, Configuration, Message } from 'cometd'
+import { CometD, Configuration, Listener, Message } from 'cometd'
 
 import { HEADER_AUTH_TOKEN_KEY } from './config'
-import { IFeedImplState, IncomingData, ISubscribeMessage } from './interfaces'
+import { IFeedImplState, IncomingData, IOnDemandMessage, ISubscribeMessage } from './interfaces'
 
 type StateChangeHandler = (state: Partial<IFeedImplState>) => void
 
@@ -110,11 +110,15 @@ export class Endpoint {
     return this.publish('sub', message)
   }
 
-  private publish(service: 'sub', message: object) {
+  invokeOnDemandService(message: IOnDemandMessage, onPublish?: Listener) {
+    return this.publish('onDemand', message, onPublish)
+  }
+
+  private publish(service: 'sub' | 'onDemand', message: object, publishCallback?: Listener) {
     if (!this.cometd) {
       throw new Error('CometD not connected')
     }
 
-    return this.cometd.publish('/service/' + service, message)
+    return this.cometd.publish('/service/' + service, message, publishCallback)
   }
 }

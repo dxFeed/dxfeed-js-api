@@ -74,13 +74,14 @@ export class Subscriptions {
 
   subscriptions: CometdSeries<ITotalSubItem> = {}
   timeSeriesSubscriptions: CometdSeries<ITotalTimeSeriesSubItem> = {}
+  stateSubscriptions: Set<(state: IFeedImplState) => void> = new Set()
 
   queue: Queue = createDefaultQueue()
 
   constructor(endpoint: Endpoint) {
     this.endpoint = endpoint
 
-    endpoint.registerStateChangeHandler(this.onStateChange)
+    endpoint.registerStateChangeHandler(this.changeState)
     endpoint.registerDataChangeHandler(this.onData)
   }
 
@@ -293,7 +294,15 @@ export class Subscriptions {
     }
   }
 
-  private onStateChange = (stateChange: Partial<IFeedImplState>) => {
+  subscribeState = (listener: (state: IFeedImplState) => void) => {
+    listener(this.state)
+    this.stateSubscriptions.add(listener)
+    return () => {
+      this.stateSubscriptions.delete(listener)
+    }
+  }
+
+  changeState = (stateChange: Partial<IFeedImplState>) => {
     if (stateChange.connected) {
       this.queue.reset = true
       this.scheduleSendSub()
@@ -302,6 +311,8 @@ export class Subscriptions {
     Object.entries(stateChange).forEach(([key, val]) => {
       this.state[key] = val
     })
+
+    this.stateSubscriptions.forEach((listener) => listener(this.state))
   }
 
   private queueAction = (action: 'add' | 'remove', eventType: EventType, eventSymbol: string) => {
@@ -378,7 +389,10 @@ export class Subscriptions {
         event[eventPropertyName] = values[eventPropertyIndex]
       })
 
-      subscription[event.eventSymbol]?.listeners.forEach((listener) => listener(event))
+      const subscriptionItem = subscription[event.eventSymbol]
+      if (subscriptionItem) {
+        subscriptionItem.listeners.forEach((listener) => listener(event))
+      }
     })
   }
 }
