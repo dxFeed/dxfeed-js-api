@@ -6,6 +6,7 @@
  */
 
 import { Message } from 'cometd'
+
 import { Endpoint } from './endpoint'
 import { EventType, IEvent, IFeedImplState, ITimeSeriesEvent } from './interfaces'
 import { Subscriptions } from './subscriptions'
@@ -56,8 +57,7 @@ class Feed {
   subscribeState = (onChange: (state: IFeedImplState) => void) =>
     this.subscriptions.subscribeState(onChange)
 
-  invokeOnDemandMethod(method: 'stop'): void
-  invokeOnDemandMethod(method: 'clear'): void
+  invokeOnDemandMethod(method: 'clear' | 'stop'): void
   invokeOnDemandMethod(method: 'setSpeed', speed: number): void
   invokeOnDemandMethod(method: 'replay', speed: number, replayStartTime: number): void
   invokeOnDemandMethod(
