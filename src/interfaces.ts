@@ -29,6 +29,7 @@ export interface IEvent {
 export interface ITimeSeriesEvent extends IEvent {
   index: number
   time: number
+  eventFlags: number
 }
 
 export type CometdSeries<T> = {

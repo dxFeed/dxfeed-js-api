@@ -55,7 +55,7 @@ function Playground() {
   const feed = React.useMemo(() => new Feed(), [])
 
   React.useEffect(() => {
-    feed.connect('wss://tools.dxfeed.com/webservice/cometd')
+    feed.connect('wss://demo.dxfeed.com/webservice/cometd')
 
     return () => feed.disconnect()
   }, [])
@@ -157,7 +157,7 @@ function Playground() {
  
    const feed = React.useMemo(() => new Feed(), [])
    React.useEffect(() => {
-     feed.connect('wss://tools.dxfeed.com/webservice/cometd')
+     feed.connect('wss://demo.dxfeed.com/webservice/cometd')
      return () => feed.disconnect()
    }, [])
    

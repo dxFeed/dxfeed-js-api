@@ -7,81 +7,109 @@ Our package is easy to integrate with any modern framework.
 ## Install
 
 ```sh
-yarn add @dxfeed/api
+npm install @dxfeed/api
+```
+
+## NodeJS usage
+
+Install `cometd-nodejs-client` package
+
+```sh
+npm install cometd-nodejs-client
+```
+
+and use it in your code
+
+```js
+require('cometd-nodejs-client').adapt()
+// or
+import * as CometdNodejsClient from 'cometd-nodejs-client'
+CometdNodejsClient.adapt()
 ```
 
 ## Basic Usage
 
 We have several classes in implementation:
- - Feed ***(public)***
- - Endpoint ***(private)***
- - Subscriptions ***(private)***
 
-The *Feed* is entry point for configuration and creating subscriptions.
-*Feed* manages private classes for connecting and subscribing.
-The *Endpoint* is responsible for managing the web socket connection.
-*Subscriptions* for managing open subscriptions.
+- Feed **_(public)_**
+- Endpoint **_(private)_**
+- Subscriptions **_(private)_**
 
+The _Feed_ is entry point for configuration and creating subscriptions.
+_Feed_ manages private classes for connecting and subscribing.
+The _Endpoint_ is responsible for managing the web socket connection.
+_Subscriptions_ for managing open subscriptions.
 
 ## Import package
+
 ```ts
 import Feed from '@dxfeed/api'
 ```
 
 ## Configure & Create connection
+
 Create instance of Feed.
+
 ```ts
 const feed = new Feed()
 ```
 
 Provide auth token if needed.
+
 ```ts
 feed.setAuthToken('authToken')
 ```
 
 Set web socket address and open connection.
+
 ```ts
-feed.connect('wss://tools.dxfeed.com/webservice/cometd')
+feed.connect('wss://demo.dxfeed.com/webservice/cometd')
 ```
 
 ## Configure & Create subscription
+
 You should specify event types and symbol names.
+
 ```ts
 feed.subscribe<{ value: number }>(
-    [EventType.Summary, EventType.Trade], /* event types */
-    ['AEX.IND:TEI'], /* symbols */
-    handleEvent
+  [EventType.Summary, EventType.Trade] /* event types */,
+  ['AEX.IND:TEI'] /* symbols */,
+  handleEvent
 )
 ```
 
 For timed subscription you should also provide time to start subscription from.
 
-For Candle event type along with base symbol, you should specify an aggregation period. You can also set price type. More details: https://kb.dxfeed.com/display/DS/REST+API#RESTAPI-Candlesymbols.
+For Candle event type along with base symbol, you should specify an aggregation period. You can also set price type. More details: [https://kb.dxfeed.com/en/data-access/rest-api.html#candle-symbols](https://kb.dxfeed.com/en/data-access/rest-api.html#candle-symbols)
+
 ```ts
 feed.subscribeTimeSeries<{ value: number }>(
-    [EventType.Summary, EventType.Trade], /* event types */
-    ['AEX.IND:TEI'], /* symbols */
-    0, /* fromTime */
-    handleEvent
+  [EventType.Summary, EventType.Trade] /* event types */,
+  ['AEX.IND:TEI'] /* symbols */,
+  0 /* fromTime */,
+  handleEvent
 )
 ```
 
 Last argument its event handler for process incoming events.
+
 ```ts
-const handleEvent = event => {
-    /* process event */
+const handleEvent = (event) => {
+  /* process event */
 }
 ```
 
 ## Close subscription
+
 All subscribe methods return unsubscribe handler, you need to call this method for unsubscribe.
+
 ```ts
 const unsubscribe = feed.subscribe(eventTypes, symbols, handleEvent)
 
 onExit(() => unsubscribe())
 ```
 
-## Promise API
+## Aggregated API
 
 ### Get TimeSeries
 
@@ -97,8 +125,21 @@ const events = await feed.getTimeSeries(
 )
 ```
 
+### Subscribe TimeSeries snapshot
+
+If you want to subscribe to TimeSeries events, refer to example below.
+
+```ts
+const unsubscribe = feed.subscribeTimeSeriesSnapshot('AAPL{=15m}', EventType.Candle, (candles) => {
+  // process candles
+  chart.setCandles(candles)
+})
+```
+
 ## Close connection
+
 If you need to close the web socket connection
+
 ```ts
 feed.disconnect()
 ```

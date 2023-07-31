@@ -1,5 +1,5 @@
 /** @license
- * Copyright ©2020 Devexperts LLC. All rights reserved.
+ * Copyright ©2022 Devexperts LLC. All rights reserved.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  * If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -15,21 +15,26 @@ import FormLabel from '@material-ui/core/FormLabel'
 import Grid from '@material-ui/core/Grid'
 import Radio from '@material-ui/core/Radio'
 import RadioGroup from '@material-ui/core/RadioGroup'
+import Input from '@material-ui/core/Input'
 import { useComponents } from 'docz'
 
 import Feed, { EventType } from '../../src'
 
-const SYMBOLS = ['ETH/USD', 'EUR/USD'] as const
+const SYMBOLS = ['AAPL', 'GOOG'] as const
 
-const DataViewer = ({ play, events }: { play: boolean; events: unknown[] }) =>
-  (play || events.length > 0) && (
+const minusDay = (date: Date, days: number): Date => {
+  return new Date(date.getTime() - days * 24 * 60 * 60 * 1000)
+}
+
+const DataViewer = ({ events }: { events: unknown[] }) =>
+  events.length > 0 && (
     <Grid style={{ marginTop: 5 }} container spacing={3}>
-      {events.length === 0 && <Grid item>Waiting events</Grid>}
-      {events.map((event, idx) => (
+      {events.slice(0, Math.min(10, events.length)).map((event, idx) => (
         <Grid key={idx} item>
           <Inspector data={event} />
         </Grid>
       ))}
+      <Grid item>Only displaying 10 events, total: {events.length}</Grid>
     </Grid>
   )
 
@@ -43,10 +48,9 @@ function Playground() {
   const PreComponent = pre as React.FunctionComponent<{}>
   const H2Component = h2 as React.FunctionComponent<{}>
 
-  const feedRef = React.useRef<Feed | null>(null)
-  const [type, setType] = React.useState<'series' | 'timeSeries'>('series')
-  const [eventType, setEventType] = React.useState<EventType>(EventType.Trade)
+  const [eventType, setEventType] = React.useState<EventType>(EventType.Candle)
   const [symbolName, setSymbolName] = React.useState<string>(SYMBOLS[0])
+  const [days, setDays] = React.useState<number>(5)
 
   const feed = React.useMemo(() => new Feed(), [])
 
@@ -64,15 +68,7 @@ function Playground() {
         <Grid item lg={4} md={12} xs={12}>
           <FormControl component="fieldset">
             <FormLabel component="legend">Select type</FormLabel>
-            <RadioGroup
-              aria-label="type"
-              name="type"
-              value={type}
-              onChange={(event) => {
-                setType(event.target.value as any)
-              }}
-            >
-              <FormControlLabel value="series" control={<Radio />} label="Series" />
+            <RadioGroup aria-label="type" name="type" value={'timeSeries'} onChange={() => {}}>
               <FormControlLabel value="timeSeries" control={<Radio />} label="Time Series" />
             </RadioGroup>
           </FormControl>
@@ -117,6 +113,21 @@ function Playground() {
             </RadioGroup>
           </FormControl>
         </Grid>
+
+        <Grid item lg={4} md={6} xs={12}>
+          <FormControl component="div">
+            <FormLabel component="label">Period in days</FormLabel>
+            <Input
+              aria-label="periodInDays"
+              name="Period in days"
+              value={days}
+              onChange={(event) => {
+                const value = event.target.value
+                setDays(value.length ? parseInt(value, 10) : 0)
+              }}
+            />
+          </FormControl>
+        </Grid>
       </Grid>
 
       <H2Component>Example</H2Component>
@@ -142,46 +153,40 @@ function Playground() {
         }}
         language="js"
         code={`() => {
-  const [play, setPlay] = React.useState(false)
-  const [forceUpdate, setForceUpdate] = React.useState(0)
-  const [events, setEvents] = React.useState([])
-  const handleEvent = React.useCallback((event) => {
-    setEvents((prevState) => [...prevState, event])
-  }, [])
+   const [events, setEvents] = React.useState([])
+ 
+   const feed = React.useMemo(() => new Feed(), [])
+   React.useEffect(() => {
+     feed.connect('wss://demo.dxfeed.com/webservice/cometd')
+     return () => feed.disconnect()
+   }, [])
+   
+   const subscriptionRef = React.useRef()
+   const subscribe = () => {
+     // Clear
+     subscriptionRef.current && subscriptionRef.current.unsubscribe()
+     setEvents([])
 
-  const feed = React.useMemo(() => new Feed(), [])
-  React.useEffect(() => {
-    feed.connect('wss://demo.dxfeed.com/webservice/cometd')
-    return () => feed.disconnect()
-  }, [])
-
-  React.useEffect(() => {
-    let unsubscribe
-    if (play) {
-      setEvents([])
-      unsubscribe = feed.${
-        type === 'series'
-          ? `subscribe(['${eventType}'], ['${symbolName}'], handleEvent)`
-          : `subscribeTimeSeries(['${eventType}'], ['${symbolName}'], 0, handleEvent)`
-      }
-    }
-    return () => unsubscribe && unsubscribe()
-  }, [play, forceUpdate])
-
-  return (
-    <>
-      <Button variant="outlined" onClick={() => setPlay(!play)}>
-        {play ? 'Stop' : 'Start'}
-      </Button>
-      {play && (
-        <Button variant="outlined" onClick={() => setForceUpdate({})}>
-          Resubscribe
-        </Button>
-      )}
-      <DataViewer play={play} events={events} />
-    </>
-  )
-}`}
+     // Subscribe
+     subscriptionRef.current = feed.subscribeTimeSeriesSnapshot(
+       '${symbolName}${eventType === EventType.Candle ? '{=d}' : ''}',
+       '${eventType}',
+       ${minusDay(new Date(), days).getTime()},
+       (snapshot) => {
+        setEvents(snapshot)
+       }
+     )
+   }
+ 
+   return (
+     <>
+       <Button variant="outlined" onClick={subscribe}>
+         Subscribe
+       </Button>
+       <DataViewer events={events} />
+     </>
+   )
+ }`}
       />
     </>
   )
