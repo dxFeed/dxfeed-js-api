@@ -1,1 +1,1 @@
-{"componentChunkName":"component---cache-dev-404-page-js","path":"/dev-404-page/","result":{"data":{"allSitePage":{"nodes":[{"path":"/"},{"path":"/basic-usage"},{"path":"/playground"},{"path":"/404/"},{"path":"/404.html"}]}},"pageContext":{}}}
+{"componentChunkName":"component---cache-dev-404-page-js","path":"/dev-404-page/","result":{"data":{"allSitePage":{"nodes":[{"path":"/"},{"path":"/playground/snapshot"},{"path":"/playground/promise"},{"path":"/playground/subscription"},{"path":"/basic-usage"},{"path":"/404/"},{"path":"/404.html"}]}},"pageContext":{}}}
