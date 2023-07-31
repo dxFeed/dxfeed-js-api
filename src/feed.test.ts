@@ -8,7 +8,7 @@
 jest.mock('./endpoint')
 
 import { EventFlag } from './eventFlags'
-import Feed, { AbortedError, TimeoutError } from './feed'
+import { Feed, AbortedError, TimeoutError } from './feed'
 import { EventType, IncomingData } from './interfaces'
 
 describe('Feed', () => {
