@@ -1,4 +1,5 @@
 # @dxfeed/api [![Version](https://img.shields.io/npm/v/@dxfeed/api.svg?style=flat-square)](https://www.npmjs.com/package/@dxfeed/api)
+## IMPORTANT: This API is outdated, please use [DXLINK API](https://github.com/dxFeed/dxLink)
 
 This package provides access to [dxFeed](https://www.dxfeed.com/) streaming data.
 
